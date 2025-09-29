@@ -141,13 +141,13 @@ function CreateRoom() {
           </div>
           {/* Submit Button */}
           {loader ? (
-            <div className="py-2 px-5 flex justify-center">
-              <Spinner
-                className="bg-indigo-600"
-                color="red"
-                aria-label="Success spinner example"
-              />
-            </div>
+            <div
+              className="w-10 h-10 rounded-full border-4 border-transparent bg-gradient-to-r from-indigo-600 to-purple-600 animate-spin"
+              style={{
+                maskImage: "linear-gradient(transparent 50%, black 50%)",
+                WebkitMaskImage: "linear-gradient(transparent 50%, black 50%)",
+              }}
+            ></div>
           ) : (
             <button
               disabled={loader}
