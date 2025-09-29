@@ -10,11 +10,14 @@ function AllRooms({ filters = {} }) {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/rooms", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await axios.get(
+          "https://room-rental-app-0ap9.onrender.com/api/rooms",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
         if (res.data.success) {
           setRooms(res.data.rooms || []);

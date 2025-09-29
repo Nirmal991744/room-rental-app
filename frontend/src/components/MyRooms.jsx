@@ -9,9 +9,12 @@ function MyRooms() {
   }, []);
   const fetchRooms = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/rooms/my-rooms", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const res = await axios.get(
+        "https://room-rental-app-0ap9.onrender.com/api/rooms/my-rooms",
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
 
       // Handle the response properly
       if (res.data.success) {
@@ -33,9 +36,12 @@ function MyRooms() {
     if (!window.confirm("Are you sure you want to delete this room?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/rooms/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await axios.delete(
+        `https://room-rental-app-0ap9.onrender.com/api/rooms/${id}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
 
       // Remove deleted room from state
       setRooms((prevRooms) => prevRooms.filter((room) => room._id !== id));

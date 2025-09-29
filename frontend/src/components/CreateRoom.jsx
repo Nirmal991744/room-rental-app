@@ -34,7 +34,7 @@ function CreateRoom() {
       data.append("image", formData.image);
 
       const res = await axios.post(
-        "http://localhost:5000/api/rooms/create",
+        "https://room-rental-app-0ap9.onrender.com/api/rooms/create",
         data,
         {
           headers: {
