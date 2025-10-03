@@ -37,7 +37,7 @@ router.post(
           errors: errors.array(),
         });
       }
-      const { name, email, password, role, phone } = req.body;
+      const { name, email, password, role, phone, lat, lng } = req.body;
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(400).json({
@@ -45,7 +45,14 @@ router.post(
           message: "User already exists with this email",
         });
       }
-      const user = new User({ name, email, password, role, phone });
+      const user = new User({
+        name,
+        email,
+        password,
+        role,
+        phone,
+        location: { lat, lng },
+      });
       await user.save();
       const token = generateToken(user._id);
       res.status(201).json({

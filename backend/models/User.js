@@ -8,6 +8,10 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, enum: ["seeker", "owner"], default: "seeker" },
     phone: { type: String, trim: true },
+    location: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
   },
   { timestamps: true }
 );

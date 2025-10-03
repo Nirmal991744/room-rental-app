@@ -17,40 +17,50 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const payload = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role,
-      phone: formData.phone,
-    };
-    try {
-      const res = await fetch(
-        "https://room-rental-app-0ap9.onrender.com/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const payload = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role,
+          phone: formData.phone,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+
+        try {
+          const res = await fetch(
+            "https://room-rental-app-0ap9.onrender.com/api/auth/register",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            }
+          );
+
+          const data = await res.json();
+
+          if (res.ok) {
+            toast.success("Signup successful", { duration: 2500 });
+            navigate("/login");
+          } else {
+            toast.error(data.message || "Signup failed", { duration: 2500 });
+          }
+        } catch (err) {
+          toast.error("Something went wrong during signup", { duration: 2500 });
+        } finally {
+          setLoading(false);
         }
-      );
-
-      const data = await res.json();
-
-      if (res.ok) {
-        console.log("Signup successful:", data);
-        toast.success("Signup successful", { duration: 2500 });
-        navigate("/login");
-      } else {
-        toast.error(data.message || "Signup failed", { duration: 2500 });
+      },
+      (error) => {
+        toast.error("Location permission denied ❌");
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Signup error:", err);
-      toast.error("Something went wrong during signup", { duration: 2500 });
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const handleInputChange = (field) => (e) => {

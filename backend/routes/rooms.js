@@ -14,9 +14,9 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
-      const { price, location, roomType } = req.body;
+      const { price, latitude, longitude, roomType } = req.body;
 
-      if (!price || !location || !roomType || !req.file) {
+      if (!price || !latitude || !longitude || !roomType || !req.file) {
         return res.status(400).json({
           success: false,
           message: "price, location, image, and roomType are required",
@@ -25,7 +25,10 @@ router.post(
 
       const newRoom = await Room.create({
         price,
-        location,
+        location: {
+          type: "Point",
+          coordinates: [longitude, latitude], // [lng, lat]
+        },
         roomType,
         imageUrl: req.file.path, // ✅ Cloudinary URL
         owner: req.user._id,
@@ -132,6 +135,34 @@ router.get("/", auth, async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+});
+
+router.get("/nearby", auth, async (req, res) => {
+  try {
+    const { latitude, longitude, distance = 5000 } = req.query;
+    // distance in meters (default 5 km)
+
+    const rooms = await Room.find({
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+          $maxDistance: distance,
+        },
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      count: rooms.length,
+      rooms,
+    });
+  } catch (error) {
+    console.error("Nearby rooms error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

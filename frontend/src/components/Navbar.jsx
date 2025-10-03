@@ -51,24 +51,9 @@ function Navbar() {
           </ul>
 
           {/* Desktop Auth/Profile */}
-          {user ? (
+          {user && (
             <div className="flex items-center space-x-6">
               <Profile />
-            </div>
-          ) : (
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate("/login")}
-                className="px-4 py-2 text-indigo-600 border rounded-full hover:bg-indigo-50 transition-all"
-              >
-                Login
-              </button>
-              <button
-                onClick={() => navigate("/signup")}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all"
-              >
-                Sign Up
-              </button>
             </div>
           )}
 
