@@ -1,4 +1,4 @@
-import React, { use, useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "flowbite-react";
@@ -7,6 +7,8 @@ function Signup() {
   const navigate = useNavigate();
   const [role, setRole] = useState("");
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState(null);
+  const [locationError, setLocationError] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -14,53 +16,80 @@ function Signup() {
     phone: "",
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const payload = {
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role,
-          phone: formData.phone,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
-
-        try {
-          const res = await fetch(
-            "https://room-rental-app-0ap9.onrender.com/api/auth/register",
+  // Request location when component mounts
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          toast.success("Location access granted ✓", { duration: 2000 });
+        },
+        (error) => {
+          setLocationError(true);
+          toast.error(
+            "Location permission denied. Please enable location access.",
             {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(payload),
+              duration: 4000,
             }
           );
-
-          const data = await res.json();
-
-          if (res.ok) {
-            toast.success("Signup successful", { duration: 2500 });
-            navigate("/login");
-          } else {
-            toast.error(data.message || "Signup failed", { duration: 2500 });
-          }
-        } catch (err) {
-          toast.error("Something went wrong during signup", { duration: 2500 });
-        } finally {
-          setLoading(false);
         }
-      },
-      (error) => {
-        toast.error("Location permission denied ❌");
-        setLoading(false);
+      );
+    } else {
+      setLocationError(true);
+      toast.error("Geolocation is not supported by your browser", {
+        duration: 4000,
+      });
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!location) {
+      toast.error("Location access is required for signup", { duration: 3000 });
+      return;
+    }
+
+    setLoading(true);
+
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role,
+      phone: formData.phone,
+      lat: location.latitude,
+      lng: location.longitude,
+    };
+
+    try {
+      const res = await fetch(
+        "https://room-rental-app-0ap9.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Signup successful", { duration: 2500 });
+        navigate("/login");
+      } else {
+        toast.error(data.message || "Signup failed", { duration: 2500 });
       }
-    );
+    } catch (err) {
+      toast.error("Something went wrong during signup", { duration: 2500 });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (field) => (e) => {
@@ -68,6 +97,22 @@ function Signup() {
       ...prev,
       [field]: e.target.value,
     }));
+  };
+
+  const requestLocationAgain = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+        setLocationError(false);
+        toast.success("Location access granted ✓", { duration: 2000 });
+      },
+      (error) => {
+        toast.error("Location permission denied", { duration: 3000 });
+      }
+    );
   };
 
   const goToLogin = () => {
@@ -83,6 +128,28 @@ function Signup() {
         <div className="text-2xl font-medium mb-2">🏠 RoomFinder</div>
 
         <h2 className="mt-5 text-xl text-gray-700 mb-6">Create Your Account</h2>
+
+        {/* Location status indicator */}
+        {locationError && (
+          <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700 mb-2">
+              📍 Location access is required for signup
+            </p>
+            <button
+              type="button"
+              onClick={requestLocationAgain}
+              className="text-sm text-blue-600 hover:text-blue-700 underline"
+            >
+              Request location access again
+            </button>
+          </div>
+        )}
+
+        {location && (
+          <div className="w-full mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-700">✓ Location access granted</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           <div>
@@ -184,7 +251,12 @@ function Signup() {
           ) : (
             <button
               type="submit"
-              className="w-full bg-green-500 hover:bg-green-600 py-3 px-5 rounded-lg text-white font-medium transition-colors mt-6"
+              disabled={!location}
+              className={`w-full py-3 px-5 rounded-lg text-white font-medium transition-colors mt-6 ${
+                location
+                  ? "bg-green-500 hover:bg-green-600"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
             >
               Sign Up
             </button>

@@ -14,21 +14,18 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
-      const { price, latitude, longitude, roomType } = req.body;
+      const { price, roomType, address } = req.body;
 
-      if (!price || !latitude || !longitude || !roomType || !req.file) {
+      if (!price || !address || !roomType || !req.file) {
         return res.status(400).json({
           success: false,
-          message: "price, location, image, and roomType are required",
+          message: "price, address, image, and roomType are required",
         });
       }
 
       const newRoom = await Room.create({
         price,
-        location: {
-          type: "Point",
-          coordinates: [longitude, latitude], // [lng, lat]
-        },
+        address,
         roomType,
         imageUrl: req.file.path, // ✅ Cloudinary URL
         owner: req.user._id,
@@ -115,7 +112,9 @@ router.delete("/:id", auth, isOwner, async (req, res) => {
 
 router.get("/", auth, async (req, res) => {
   try {
-    const rooms = await Room.find({}).populate("owner", "name image phone");
+    const rooms = await Room.find({})
+      .populate("owner", "name phone email role lat lng") // ✅ pick what you want
+      .sort({ createdAt: -1 });
 
     console.log(rooms);
 

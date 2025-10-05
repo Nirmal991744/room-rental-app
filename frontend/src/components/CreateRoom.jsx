@@ -7,7 +7,7 @@ function CreateRoom() {
   const [loader, setLoader] = useState(false);
   const [formData, setFormData] = useState({
     price: "",
-    location: "",
+    address: "",
     roomType: "",
     image: null,
   });
@@ -29,7 +29,7 @@ function CreateRoom() {
       const token = localStorage.getItem("token");
       const data = new FormData();
       data.append("price", formData.price);
-      data.append("location", formData.location);
+      data.append("address", formData.address);
       data.append("roomType", formData.roomType);
       data.append("image", formData.image);
 
@@ -88,13 +88,13 @@ function CreateRoom() {
 
           {/* Location */}
           <div className="flex flex-col">
-            <label className="text-gray-700 font-medium mb-1">Location</label>
+            <label className="text-gray-700 font-medium mb-1">Address</label>
             <input
               type="text"
-              name="location"
-              value={formData.location}
+              name="address"
+              value={formData.address}
               onChange={handleChange}
-              placeholder="Enter room location"
+              placeholder="Enter room address"
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
               required
             />

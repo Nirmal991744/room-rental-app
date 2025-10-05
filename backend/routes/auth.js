@@ -45,15 +45,19 @@ router.post(
           message: "User already exists with this email",
         });
       }
-      const user = new User({
-        name,
-        email,
-        password,
-        role,
-        phone,
-        location: { lat, lng },
+      const newUser = new User({
+        name: req.body.name,
+        email: req.body.email,
+        password: hashedPassword,
+        role: req.body.role,
+        phone: req.body.phone,
+        location: {
+          lat: req.body.lat,
+          lng: req.body.lng,
+        },
       });
-      await user.save();
+      await newUser.save();
+
       const token = generateToken(user._id);
       res.status(201).json({
         success: true,
