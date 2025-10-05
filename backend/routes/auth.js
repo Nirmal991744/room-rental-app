@@ -46,29 +46,24 @@ router.post(
         });
       }
       const newUser = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: hashedPassword,
-        role: req.body.role,
-        phone: req.body.phone,
+        name: name,
+        email: email,
+        password: password,
+        role: role,
+        phone: phone,
         location: {
-          lat: req.body.lat,
-          lng: req.body.lng,
+          lat: lat,
+          lng: lng,
         },
       });
       await newUser.save();
 
-      const token = generateToken(user._id);
+      const token = generateToken(newUser._id);
       res.status(201).json({
         success: true,
         message: "User registered successfully",
         token,
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+        user: newUser,
       });
     } catch (error) {
       console.error("Resgistration error:", error);
