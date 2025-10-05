@@ -41,7 +41,6 @@ function Navbar() {
               <li key={link.name}>
                 <Link
                   to={link.path}
-                  onClick={() => navigate(link.path)}
                   className="text-gray-600 hover:text-indigo-600 transition-colors duration-200 font-medium text-base"
                 >
                   {link.name}
@@ -51,11 +50,26 @@ function Navbar() {
           </ul>
 
           {/* Desktop Auth/Profile */}
-          {user && (
-            <div className="flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
               <Profile />
-            </div>
-          )}
+            ) : (
+              <>
+                <button
+                  className="px-4 py-2 text-indigo-600 border border-indigo-200 rounded-full hover:bg-indigo-50 transition-all font-medium"
+                  onClick={() => navigate("/login")}
+                >
+                  Login
+                </button>
+                <button
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all font-medium shadow-sm"
+                  onClick={() => navigate("/signup")}
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <button
