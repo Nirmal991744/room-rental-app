@@ -37,10 +37,12 @@ router.post(
         room: newRoom,
       });
     } catch (error) {
-      console.error("Room creation error:", error);
-      res
-        .status(500)
-        .json({ success: false, message: "Server error during room creation" });
+      console.error("❌ Room creation error:", error.stack || error);
+      return res.status(500).json({
+        success: false,
+        message: "Server error during room creation",
+        error: error.message,
+      });
     }
   }
 );
@@ -113,7 +115,7 @@ router.delete("/:id", auth, isOwner, async (req, res) => {
 router.get("/", auth, async (req, res) => {
   try {
     const rooms = await Room.find({})
-      .populate("owner", "name phone email role lat lng") // ✅ pick what you want
+      .populate("owner", "name phone email role location") // ✅ pick what you want
       .sort({ createdAt: -1 });
 
     console.log(rooms);

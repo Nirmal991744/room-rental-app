@@ -3,17 +3,7 @@ const mongoose = require("mongoose");
 const roomSchema = new mongoose.Schema(
   {
     price: { type: Number, required: true, min: 0 },
-    location: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
-      coordinates: {
-        type: [Number], // [lng, lat]
-        required: true,
-      },
-    },
+    address: { type: String, required: true },
     roomType: {
       type: String,
       enum: ["single", "double", "shared"],
@@ -32,7 +22,5 @@ const roomSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-roomSchema.index({ location: "2dsphere" });
 
 module.exports = mongoose.model("Room", roomSchema);
