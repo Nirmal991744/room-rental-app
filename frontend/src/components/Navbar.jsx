@@ -10,7 +10,7 @@ function Navbar() {
 
   const seekerLinks = [
     { name: "Search", path: "/" },
-    { name: "Featured", path: "/featured" },
+    { name: "Feature", path: "/feature" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contactus" },
   ];
@@ -30,7 +30,7 @@ function Navbar() {
           {/* Logo */}
           <div
             className="text-2xl font-bold text-gray-800 flex items-center gap-2 cursor-pointer"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/rooms")}
           >
             🏠 <span className="text-indigo-600">RoomFinder</span>
           </div>
