@@ -16,16 +16,13 @@ function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(
-        "https://room-rental-app-0ap9.onrender.com/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
       const data = await res.json();
       if (res.ok) {
         toast.success("Login successful", { duration: 2500 });

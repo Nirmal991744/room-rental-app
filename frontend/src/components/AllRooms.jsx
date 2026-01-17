@@ -7,6 +7,8 @@ import {
   Home,
   Navigation,
   AlertCircle,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 
 function AllRooms({ filters = null }) {
@@ -15,18 +17,17 @@ function AllRooms({ filters = null }) {
   const [userLocation, setUserLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [locationError, setLocationError] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState({});
+  const [bookingStatus, setBookingStatus] = useState({});
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get(
-          "https://room-rental-app-0ap9.onrender.com/api/rooms",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await axios.get("http://localhost:5000/api/rooms", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         if (res.data.success) {
           setRooms(res.data.rooms);
           setFilteredRooms(res.data.rooms);
@@ -64,7 +65,6 @@ function AllRooms({ filters = null }) {
     }
   }, []);
 
-  // Apply filters when filters or rooms change
   useEffect(() => {
     if (!filters) {
       setFilteredRooms(rooms);
@@ -75,17 +75,17 @@ function AllRooms({ filters = null }) {
 
     if (filters.location) {
       result = result.filter((room) =>
-        room.location?.toLowerCase().includes(filters.location.toLowerCase())
+        room.address?.toLowerCase().includes(filters.location.toLowerCase())
       );
     }
 
     if (filters.budget) {
       if (filters.budget === "1500+") {
-        result = result.filter((room) => room.price >= 9000);
+        result = result.filter((room) => room.price >= 15000);
       } else {
         const [min, max] = filters.budget.split("-").map(Number);
         result = result.filter(
-          (room) => room.price >= min * 10 && room.price <= max * 10
+          (room) => room.price >= min && room.price <= max
         );
       }
     }
@@ -136,6 +136,41 @@ function AllRooms({ filters = null }) {
     window.open(url, "_blank");
   };
 
+  const bookRoom = async (roomId) => {
+    setBookingLoading((prev) => ({ ...prev, [roomId]: true }));
+
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/rooms/${roomId}/request-booking`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (res.data.success) {
+        setBookingStatus((prev) => ({ ...prev, [roomId]: "success" }));
+        setTimeout(() => {
+          setBookingStatus((prev) => ({ ...prev, [roomId]: null }));
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      alert(
+        error.response?.data?.message ||
+          "Failed to send booking request. Please try again."
+      );
+      setBookingStatus((prev) => ({ ...prev, [roomId]: "error" }));
+      setTimeout(() => {
+        setBookingStatus((prev) => ({ ...prev, [roomId]: null }));
+      }, 3000);
+    } finally {
+      setBookingLoading((prev) => ({ ...prev, [roomId]: false }));
+    }
+  };
+
   const requestLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -161,7 +196,7 @@ function AllRooms({ filters = null }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
           <p className="mt-4 text-gray-600 font-medium">Loading rooms...</p>
@@ -171,128 +206,209 @@ function AllRooms({ filters = null }) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {locationError && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="text-amber-600 mt-0.5" size={20} />
-          <div>
-            <p className="text-amber-800 font-medium">
-              Location access disabled
-            </p>
-            <p className="text-amber-700 text-sm mt-1">
-              Enable location to see distances and get directions to rooms.
-            </p>
-            <button
-              onClick={requestLocation}
-              className="mt-2 text-sm text-amber-900 underline hover:text-amber-700"
-            >
-              Enable location access
-            </button>
-          </div>
-        </div>
-      )}
-
-      {filteredRooms.length === 0 ? (
-        <div className="text-center py-20">
-          <Home className="mx-auto text-gray-400 mb-4" size={64} />
-          <h2 className="text-2xl font-semibold text-gray-600 mb-2">
-            No rooms available
-          </h2>
-          <p className="text-gray-500">Try changing your filters.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRooms.map((room) => {
-            const roomLat = room.owner?.location?.lat;
-            const roomLng = room.owner?.location?.lng;
-
-            const distance =
-              userLocation &&
-              roomLat &&
-              roomLng &&
-              calculateDistance(
-                userLocation.lat,
-                userLocation.lng,
-                roomLat,
-                roomLng
-              );
-
-            return (
-              <div
-                key={room._id}
-                className="bg-white rounded-xl shadow-md overflow-hidden group"
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {locationError && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle
+              className="text-amber-600 mt-0.5 flex-shrink-0"
+              size={20}
+            />
+            <div className="flex-1">
+              <p className="text-amber-800 font-medium">
+                Location access disabled
+              </p>
+              <p className="text-amber-700 text-sm mt-1">
+                Enable location to see distances and get directions to rooms.
+              </p>
+              <button
+                onClick={requestLocation}
+                className="mt-2 text-sm text-amber-900 underline hover:text-amber-700 font-medium"
               >
-                <div className="relative h-56 bg-gray-200">
-                  <img
-                    src={
-                      room.imageUrl ||
-                      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500"
-                    }
-                    alt="Room"
-                    className="w-full h-full object-cover"
-                  />
-                  {distance && (
-                    <div className="absolute top-3 right-3 bg-white/95 px-3 py-1.5 rounded-full shadow-lg text-sm font-semibold text-indigo-600">
-                      {distance} km
-                    </div>
-                  )}
-                  <div className="absolute bottom-3 left-3 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg">
-                    <span className="text-xl font-bold">₹{room.price}</span>
-                    <span className="text-xs ml-1 opacity-90">/month</span>
-                  </div>
-                </div>
+                Enable location access
+              </button>
+            </div>
+          </div>
+        )}
 
-                <div className="p-5 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Home className="text-indigo-600" size={18} />
-                    <span className="font-semibold text-gray-800 capitalize">
-                      {room.roomType || "Room"}
-                    </span>
-                  </div>
+        {filteredRooms.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="bg-white rounded-xl shadow-sm p-12 max-w-md mx-auto">
+              <Home className="mx-auto text-gray-400 mb-4" size={64} />
+              <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+                No rooms available
+              </h2>
+              <p className="text-gray-500">
+                Try adjusting your filters to see more results.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">
+                Available Rooms
+              </h2>
+              <p className="text-gray-600 mt-1">
+                {filteredRooms.length}{" "}
+                {filteredRooms.length === 1 ? "room" : "rooms"} found
+              </p>
+            </div>
 
-                  <div className="flex items-start gap-2">
-                    <MapPin className="text-gray-500 mt-0.5" size={18} />
-                    <p className="text-gray-700 text-sm line-clamp-2">
-                      {room.address || "Address not available"}
-                    </p>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRooms.map((room) => {
+                const roomLat = room.owner?.location?.lat;
+                const roomLng = room.owner?.location?.lng;
 
-                  <div className="pt-3 border-t border-gray-100 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="text-gray-500" size={16} />
-                      <span className="text-sm text-gray-600">
-                        Owner:{" "}
-                        <span className="font-medium text-gray-800">
-                          {room.owner?.name || "N/A"}
-                        </span>
-                      </span>
-                    </div>
-                    {room.owner?.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="text-gray-500" size={16} />
-                        <a
-                          href={`tel:${room.owner.phone}`}
-                          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                        >
-                          {room.owner.phone}
-                        </a>
-                      </div>
-                    )}
-                  </div>
+                const distance =
+                  userLocation &&
+                  roomLat &&
+                  roomLng &&
+                  calculateDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    roomLat,
+                    roomLng
+                  );
 
-                  <button
-                    onClick={() => openMap(roomLat, roomLng)}
-                    className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                const isBooked = room.status === "booked";
+                const isLoading = bookingLoading[room._id];
+                const status = bookingStatus[room._id];
+
+                return (
+                  <div
+                    key={room._id}
+                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
                   >
-                    <Navigation size={18} />
-                    View on Map
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                    <div className="relative h-56 bg-gray-200">
+                      <img
+                        src={
+                          room.imageUrl ||
+                          "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500"
+                        }
+                        alt={`${room.roomType} room`}
+                        className="w-full h-full object-cover"
+                      />
+
+                      {isBooked && (
+                        <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg text-sm font-semibold">
+                          Booked
+                        </div>
+                      )}
+
+                      {distance && (
+                        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg text-sm font-semibold text-indigo-600">
+                          📍 {distance} km away
+                        </div>
+                      )}
+
+                      <div className="absolute bottom-3 left-3 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg">
+                        <span className="text-xl font-bold">
+                          ₹{room.price.toLocaleString()}
+                        </span>
+                        <span className="text-xs ml-1 opacity-90">/month</span>
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Home
+                          className="text-indigo-600 flex-shrink-0"
+                          size={18}
+                        />
+                        <span className="font-semibold text-gray-800 capitalize">
+                          {room.roomType} Room
+                        </span>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <MapPin
+                          className="text-gray-500 mt-0.5 flex-shrink-0"
+                          size={18}
+                        />
+                        <p className="text-gray-700 text-sm line-clamp-2">
+                          {room.address || "Address not available"}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-gray-100 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <User
+                            className="text-gray-500 flex-shrink-0"
+                            size={16}
+                          />
+                          <span className="text-sm text-gray-600">
+                            Owner:{" "}
+                            <span className="font-medium text-gray-800">
+                              {room.owner?.name || "N/A"}
+                            </span>
+                          </span>
+                        </div>
+                        {room.owner?.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone
+                              className="text-gray-500 flex-shrink-0"
+                              size={16}
+                            />
+                            <a
+                              href={`tel:${room.owner.phone}`}
+                              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium hover:underline"
+                            >
+                              {room.owner.phone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-2 space-y-2">
+                        <button
+                          onClick={() => openMap(roomLat, roomLng)}
+                          disabled={!roomLat || !roomLng}
+                          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Navigation size={18} />
+                          View on Map
+                        </button>
+
+                        <button
+                          onClick={() => bookRoom(room._id)}
+                          disabled={isBooked || isLoading}
+                          className={`w-full font-medium py-2.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+                            isBooked
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : status === "success"
+                              ? "bg-green-600 text-white"
+                              : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                          }`}
+                        >
+                          {isLoading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              Sending Request...
+                            </>
+                          ) : status === "success" ? (
+                            <>
+                              <CheckCircle size={18} />
+                              Request Sent!
+                            </>
+                          ) : isBooked ? (
+                            "Already Booked"
+                          ) : (
+                            <>
+                              <Clock size={18} />
+                              Request Booking
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
